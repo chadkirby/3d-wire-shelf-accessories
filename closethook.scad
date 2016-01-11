@@ -4,7 +4,7 @@ rackSpacing = 49.5 - 8;
 
 // ikea shop shelves:
 rackD = 7.5;
-rackSpacing = 30 - 6.75;
+rackSpacing = 25 - 6.75;
 
 
 // sturdy
@@ -72,51 +72,13 @@ module quarterCcl(d0, d1, h) {
     }
 }
 
-module rotCcl(d) {
-    rotate([0,90,0]) cylinder(d=d, h=hookWidth, center=true);
+module rotCcl(d, hinflate = 0) {
+    rotate([0,90,0]) cylinder(d=d, h=hookWidth + hinflate, center=true);
 }
 module clipCcl(thick) {
     difference() {
-        rotCcl(d=rackSpacing*2 + rackD + thick*2);
-        rotCcl(d=rackSpacing*2 + rackD);
-    }
-}
-
-module clip2() {
-    x = -rackD - 5;
-    y = -rackSpacing;
-    linear_extrude(height = hookWidth)
-    polygon([
-        [x, y],
-        [x + 5, y - rackD - 3],
-        [0, y - rackD - 3]
-    ]);
-
-}
-module clip() {
-    intersection() {
-        union() {
-            intersection() {
-                intersection() {
-                    translate([0,17,-5]) rotCcl(d=rackSpacing*2 + rackD + 2*3);
-                    translate([0,-10,-1.3]) rotCcl(d=rackSpacing*2 + rackD + 2*1.5);
-                }
-                union () {
-                    translate([0,17,-5]) clipCcl(3);
-
-                    difference() {
-                        translate([0,-10,-1.3]) clipCcl(1.5);
-                        translate([0,15,0]) rotate([0,90,0]) cylinder(r=rackSpacing + rackD/2, h=hookWidth, center=true, $fn=60);
-                    }
-                }
-                translate([0,-2,-rackSpacing-9]) rotate([0, 90, 0]) cylinder(r=11, h=hookWidth, center=true);
-            }
-            intersection() {
-                translate([0,15,0]) clipCcl(1.5);
-                translate([0,-10,-1.3]) clipCcl(2.5);
-            }
-        }
-        translate([0,0,-50]) cube(size=[hookWidth-0.01, 100, 100], center=true);
+        rotCcl(d=92 + thick*2);
+        rotCcl(d=92);
     }
 }
 
@@ -131,17 +93,38 @@ module knob() {
     }
 }
 
+module clip3() {
+    clipThick = 1.5;
+    translate([0, 0, -rackSpacing]) {
+        difference() {
+            rotCcl(d=rackD+2*clipThick);
+            hull() {
+                rotCcl(d=rackD, hinflate=1);
+                translate([0,rackD,0]) rotCcl(d=rackD, hinflate=1);
+
+            }
+        }
+        hull() {
+            translate([0,0,-rackD/2 - 1]) rotCcl(d=clipThick);
+            translate([0,7,-rackD/2 + 1]) rotCcl(d=clipThick);
+        }
+        hull() {
+            translate([0,7,-rackD/2 + 1]) rotCcl(d=clipThick);
+            translate([0,7 + 2,-rackD/2]) rotCcl(d=1);
+        }
+    }
+}
 difference() {
     union() {
-        clip();
+        clip3();
         /*clip2();*/
         color("red") difference() {
             hookHull();
             // make sure there's room to get the wire under the hook
             if (rackSpacing < rackD * 4) {
                 translate([0,-0.6 * (rackD + hookThick), 1.75 * (rackD + 2)]) hull() {
-                    translate(knobCoords(0)) rotCcl(d=rackD + 2);
-                    translate(knobCoords(1)) rotCcl(d=hookThick*1.6);
+                    translate(knobCoords(0)) rotCcl(hinflate=1, d=rackD + 2);
+                    translate(knobCoords(1)) rotCcl(hinflate=1, d=hookThick*1.6);
                 }
             }
             quarterCcl(rackSpacing + rackD/2, rackD, 100);
@@ -150,10 +133,10 @@ difference() {
         knob();
         color("orange") hull() {
             translate(knobCoords(0.75)) rotCcl(d=1);
-            translate([0,bottomZ+2,0]) translate(knobCoords(0)) rotCcl(d=rackD + hookThick/2);
-            translate([0,0,10]) translate(knobCoords(0)) rotCcl(d=1);
+            translate([0,bottomZ,0]) translate(knobCoords(0)) rotCcl(d=rackD + hookThick/2);
+            translate([0,hookThick/2,10]) translate(knobCoords(0)) rotCcl(d=1);
         }
     }
     rackWires();
-    translate([10, 0, -6]) rotate([50, 0, 45]) rackWires();
+    *translate([5, 0, -3]) rotate([50, 0, 45]) rackWires();
 }
